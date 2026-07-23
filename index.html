@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatch Note Generator - LEDSone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .input-section h2 {
+            color: #1a202c;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            border-bottom: 3px solid #00BCD4;
+            padding-bottom: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: #4a5568;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00BCD4;
+            box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00BCD4 0%, #0097A7 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 188, 212, 0.5);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        /* Dispatch Note Styles */
+        .dispatch-note {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            border-radius: 8px;
+        }
+
+        .dispatch-header {
+            text-align: center;
+            border-bottom: 4px solid #00BCD4;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .company-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: #00BCD4;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .info-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #00BCD4;
+        }
+
+        .info-box h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a202c;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .info-box p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #4a5568;
+            margin: 4px 0;
+        }
+
+        .info-box .highlight {
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .collection-section {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .collection-section h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+        }
+
+        .signature-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-top: 60px;
+        }
+
+        .signature-box {
+            border-top: 2px solid #1a202c;
+            padding-top: 10px;
+        }
+
+        .signature-label {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .input-section {
+                display: none;
+            }
+            .dispatch-note {
+                box-shadow: none;
+                border-radius: 0;
+                margin: 0;
+                padding: 15mm;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .dispatch-note {
+                width: 100%;
+                min-height: auto;
+                padding: 20px;
+            }
+            .info-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .company-select {
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #00BCD4;
+            box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Input Section -->
+        <div class="input-section">
+            <h2>📦 Dispatch Note Generator</h2>
+            
+            <div class="company-select">
+                <div class="form-group">
+                    <label>Select Company / Company Select Pannunga</label>
+                    <select id="companySelect" onchange="updateCompanyDetails()">
+                        <option value="ledsone">LEDSone</option>
+                        <option value="dcvoltage">DCVoltage</option>
+                        <option value="srm">SRM Supplies</option>
+                        <option value="homin">Homin GmbH</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Date of Collection</label>
+                    <input type="date" id="collectionDate" value="">
+                </div>
+                <div class="form-group">
+                    <label>Pickup Time</label>
+                    <input type="text" id="pickupTime" placeholder="e.g., 10:00 AM - 2:00 PM">
+                </div>
+                <div class="form-group">
+                    <label>Collection Method</label>
+                    <input type="text" id="collectionMethod" value="Amazon freight" placeholder="e.g., Amazon freight, Courier">
+                </div>
+                <div class="form-group">
+                    <label>Location / Reference</label>
+                    <input type="text" id="location" placeholder="e.g., LBA4">
+                </div>
+                <div class="form-group">
+                    <label>No of Pallets</label>
+                    <input type="number" id="noPallets" placeholder="e.g., 5" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Barcode Number</label>
+                    <input type="text" id="barcodeNumber" placeholder="e.g., 1000666311X0000">
+                </div>
+                <div class="form-group">
+                    <label>PO Number</label>
+                    <input type="text" id="poNumber" placeholder="e.g., PO:7S$62E42,5XJW2SPZ">
+                </div>
+                <div class="form-group">
+                    <label>Pallet ID</label>
+                    <input type="text" id="palletId" placeholder="e.g., X0001">
+                </div>
+                <div class="form-group">
+                    <label>ARN Number</label>
+                    <input type="text" id="arnNumber" placeholder="e.g., 8092344542">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Delivery Address (Full Address)</label>
+                <textarea id="deliveryAddress" placeholder="Enter Amazon warehouse full address here...
+Example:
+AMAZON EU SARL UK BRANCH
+Unit IP9 Toronto Way
+DN11 0GU New Rossington
+DONCASTER"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="generateNote()">🔄 Generate / Update Preview</button>
+                <button class="btn-primary" onclick="downloadPDF()">📥 Download as PDF</button>
+                <button class="btn-secondary" onclick="clearForm()">🗑️ Clear Form</button>
+            </div>
+        </div>
+
+        <!-- Dispatch Note Preview -->
+        <div class="dispatch-note" id="dispatchNote">
+            <div class="dispatch-header">
+                <div class="company-title" id="companyNameHeader">
+                    DISPATCH NOTE LEDSONE
+                </div>
+            </div>
+
+            <div class="info-section">
+                <!-- Sender Info -->
+                <div class="info-box">
+                    <h3 id="companyNameSender">LEDSone</h3>
+                    <p id="senderAddress">
+                        Unit 3, Marshbrook Close<br>
+                        Aldermans Green Industrial Estate<br>
+                        Coventry, Not Required CV2 2NW<br>
+                        United Kingdom
+                    </p>
+                    <p style="margin-top: 12px;">
+                        <span class="highlight">Email:</span> <span id="senderEmail">amazon@ledsone.co.uk</span><br>
+                        <span class="highlight">TP:</span> <span id="senderTP">+447522607969</span>
+                    </p>
+                </div>
+
+                <!-- Receiver Info -->
+                <div class="info-box">
+                    <h3>Receiver:</h3>
+                    <p><span class="highlight">Date of Collection:</span> <span id="displayDate">-</span></p>
+                    <p><span class="highlight">Pickup Time:</span> <span id="displayTime">-</span></p>
+                    <p><span class="highlight">Collection Method:</span> <span id="displayMethod">-</span></p>
+                    <p><span class="highlight">Location:</span> <span id="displayLocation">-</span></p>
+                    <p><span class="highlight">No of Pallets:</span> <span id="displayPallets">-</span></p>
+                    <p style="margin-top: 12px;"><span class="highlight">Delivery Address:</span></p>
+                    <p id="displayDeliveryAddress" style="white-space: pre-line;">-</p>
+                </div>
+            </div>
+
+            <!-- Barcode and Pallet Details Section -->
+            <div style="margin-top: 30px; padding: 20px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #00BCD4;">
+                <div id="barcodeSection" style="text-align: center; margin-bottom: 20px;">
+                    <!-- Barcode will be displayed here -->
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                    <div>
+                        <span style="font-weight: 600; color: #1a202c;">Pallet ID:</span> 
+                        <span id="displayPalletId" style="color: #4a5568;">-</span>
+                    </div>
+                    <div>
+                        <span style="font-weight: 600; color: #1a202c;">ARN:</span> 
+                        <span id="displayArn" style="color: #4a5568;">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collection Section -->
+            <div class="collection-section">
+                <h3>Collection Time:</h3>
+                <p style="margin-bottom: 30px; color: #4a5568;">Goods Received By: <span style="font-style: italic;">(Name of the driver)</span></p>
+                
+                <div class="signature-row">
+                    <div class="signature-box">
+                        <div class="signature-label">Signature:</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="signature-label">Date:</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Company details database
+        const companies = {
+            ledsone: {
+                name: "LEDSone",
+                address: "Unit 3, Marshbrook Close\nAldermans Green Industrial Estate\nCoventry, Not Required CV2 2NW\nUnited Kingdom",
+                email: "amazon@ledsone.co.uk",
+                tp: "+447522607969"
+            },
+            dcvoltage: {
+                name: "DCVoltage",
+                address: "Unit 3, Marshbrook Close\nAldermans Green Industrial Estate\nCoventry, Not Required CV2 2NW\nUnited Kingdom",
+                email: "amazon@dcvoltage.co.uk",
+                tp: "+447522607969"
+            },
+            srm: {
+                name: "SRM Supplies",
+                address: "Unit 3, Marshbrook Close\nAldermans Green Industrial Estate\nCoventry, Not Required CV2 2NW\nUnited Kingdom",
+                email: "amazon@srmsupplies.co.uk",
+                tp: "+447522607969"
+            },
+            homin: {
+                name: "Homin GmbH",
+                address: "Unit 3, Marshbrook Close\nAldermans Green Industrial Estate\nCoventry, Not Required CV2 2NW\nUnited Kingdom",
+                email: "amazon@homingmbh.com",
+                tp: "+447522607969"
+            }
+        };
+
+        // Set today's date as default
+        document.getElementById('collectionDate').valueAsDate = new Date();
+
+        function updateCompanyDetails() {
+            const companyKey = document.getElementById('companySelect').value;
+            const company = companies[companyKey];
+            
+            document.getElementById('companyNameHeader').textContent = 'DISPATCH NOTE ' + company.name.toUpperCase();
+            document.getElementById('companyNameSender').textContent = company.name;
+            document.getElementById('senderAddress').innerHTML = company.address.replace(/\n/g, '<br>');
+            document.getElementById('senderEmail').textContent = company.email;
+            document.getElementById('senderTP').textContent = company.tp;
+        }
+
+        function generateNote() {
+            // Get form values
+            const collectionDate = document.getElementById('collectionDate').value;
+            const pickupTime = document.getElementById('pickupTime').value;
+            const collectionMethod = document.getElementById('collectionMethod').value;
+            const location = document.getElementById('location').value;
+            const noPallets = document.getElementById('noPallets').value;
+            const deliveryAddress = document.getElementById('deliveryAddress').value;
+            const barcodeNumber = document.getElementById('barcodeNumber').value;
+            const poNumber = document.getElementById('poNumber').value;
+            const palletId = document.getElementById('palletId').value;
+            const arnNumber = document.getElementById('arnNumber').value;
+
+            // Format date
+            const formattedDate = collectionDate ? new Date(collectionDate).toLocaleDateString('en-GB') : '-';
+
+            // Update display
+            document.getElementById('displayDate').textContent = formattedDate;
+            document.getElementById('displayTime').textContent = pickupTime || '-';
+            document.getElementById('displayMethod').textContent = collectionMethod || '-';
+            document.getElementById('displayLocation').textContent = location || '-';
+            document.getElementById('displayPallets').textContent = noPallets || '-';
+            document.getElementById('displayDeliveryAddress').textContent = deliveryAddress || '-';
+            document.getElementById('displayPalletId').textContent = palletId || '-';
+            document.getElementById('displayArn').textContent = arnNumber || '-';
+
+            // Generate barcode if barcode number is provided
+            const barcodeSection = document.getElementById('barcodeSection');
+            if (barcodeNumber) {
+                barcodeSection.innerHTML = `
+                    <svg id="barcode"></svg>
+                    <div style="margin-top: 10px; font-size: 13px; color: #4a5568;">
+                        ${poNumber ? poNumber : ''}
+                    </div>
+                `;
+                try {
+                    JsBarcode("#barcode", barcodeNumber, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 80,
+                        displayValue: true,
+                        fontSize: 14,
+                        margin: 10
+                    });
+                } catch (e) {
+                    barcodeSection.innerHTML = `<div style="color: #e53e3e;">Invalid barcode format</div>`;
+                }
+            } else {
+                barcodeSection.innerHTML = '';
+            }
+
+            // Smooth scroll to preview
+            document.getElementById('dispatchNote').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function downloadPDF() {
+            // Generate note first to ensure latest data
+            generateNote();
+            
+            // Small delay to ensure DOM is updated
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        function clearForm() {
+            document.getElementById('collectionDate').valueAsDate = new Date();
+            document.getElementById('pickupTime').value = '';
+            document.getElementById('collectionMethod').value = 'Amazon freight';
+            document.getElementById('location').value = '';
+            document.getElementById('noPallets').value = '';
+            document.getElementById('deliveryAddress').value = '';
+            document.getElementById('barcodeNumber').value = '';
+            document.getElementById('poNumber').value = '';
+            document.getElementById('palletId').value = '';
+            document.getElementById('arnNumber').value = '';
+            
+            // Reset preview
+            generateNote();
+        }
+
+        // Initialize with default values
+        updateCompanyDetails();
+        generateNote();
+    </script>
+</body>
+</html>
